@@ -32,5 +32,5 @@ def get_forum():
     # conn = sqlite3.connect('DiscussionForum.db')
     return '<h1>Forum return</h1>'
 @app.route()
-
+#test CHANGE
 app.run()
