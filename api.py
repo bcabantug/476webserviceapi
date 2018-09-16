@@ -5,12 +5,16 @@ import sqlite3
 app = flask.Flask(__name__)
 app.config["DEBUG"] = True
 
+#definiton to establish the connection to the db once
+# def establish_dbconn(dbname, command):
+
+
 #sublass of BasicAuth
 class NewAuth(BasicAuth):
     #override of check_credentials
     def check_credentials(username, password):
         #compare the username and password to the db
-        #if found
+        #if found, return 
 
 # basic_auth = BasicAuth(app)
 
@@ -39,8 +43,9 @@ def forum():
     #creating a new discussion forum
     if request.method == 'POST':
 
-
+    #request for all the present forums
     else:
+
 
 #create a new discussion forum POST
 # @app.route('/forums', methods=['POST'])
@@ -49,7 +54,7 @@ def forum():
 
 #list threads in the specified forum GET
 @app.route('/forums/<forum_id>', methods=['GET', 'POST'])
-def thread():
+def thread(forum_id):
     #creating a new thread in a specified forum
     if request.method == 'POST':
         #posting a new thread
@@ -65,7 +70,7 @@ def thread():
 #list posts to the specified thread GET
 
 @app.route('/forums/<forum_id>/<thread_id>', methods=['GET', 'POST'])
-def post():
+def post(forum_id, thread_id):
     if request.method == 'POST':
         #adding a new post to the specified thread
     else:
@@ -80,8 +85,8 @@ def user():
 
 #changes a user's password PUT
 @app.route('users/<username>', methods=['PUT'])
-def change_pass():
-    
+def change_pass(username):
+
 #
 
 
