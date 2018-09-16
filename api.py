@@ -1,12 +1,16 @@
 import flask
+import click
 from flask_basicauth import BasicAuth
 import sqlite3
 
 app = flask.Flask(__name__)
 app.config["DEBUG"] = True
 
+# @app.cli.command()
+
 #definiton to establish the connection to the db once
-# def establish_dbconn(dbname, command):
+def establish_dbconn(dbname, command):
+
 
 
 #sublass of BasicAuth
@@ -14,9 +18,10 @@ class NewAuth(BasicAuth):
     #override of check_credentials
     def check_credentials(username, password):
         #compare the username and password to the db
-        #if found, return 
+        #if found, return
 
-# basic_auth = BasicAuth(app)
+# new_auth = NewAuth(app)
+
 
 #dictionary function taken from programminghistorian for placement purposes
 def dict_factory(cursor, row):
@@ -45,7 +50,6 @@ def forum():
 
     #request for all the present forums
     else:
-
 
 #create a new discussion forum POST
 # @app.route('/forums', methods=['POST'])

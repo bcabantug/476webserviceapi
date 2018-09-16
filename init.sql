@@ -49,4 +49,6 @@ CREATE INDEX `UsersId`
 ON `Users`
 (
   `usersId` ASC
-)
+);
+
+INSERT INTO Users (Username, Password) VALUES ("login", "testpass");
