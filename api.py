@@ -1,16 +1,16 @@
-import flask
+from flask import Flask, Response, request, jsonify, render_template
 import click
 from flask_basicauth import BasicAuth
 import sqlite3
 
-app = flask.Flask(__name__)
+app = Flask(__name__)
 app.config["DEBUG"] = True
 
 # @app.cli.command()
 
 #definiton to establish the connection to the db once
 def establish_dbconn(dbname, command):
-
+    print ('db connected')
 
 
 #sublass of BasicAuth
@@ -19,6 +19,9 @@ class NewAuth(BasicAuth):
     def check_credentials(username, password):
         #compare the username and password to the db
         #if found, return
+        found = username == app.config['BASIC_AUTH_USERNAME'] and password == app.config['BASIC_AUTH_PASSWORD']
+        if found:
+            print('User authenticated')
 
 # new_auth = NewAuth(app)
 
@@ -27,7 +30,7 @@ class NewAuth(BasicAuth):
 def dict_factory(cursor, row):
     d={}
     for idx, col in enumerate(cursor.description):
-        d[col[0]]= row[idk]
+        d[col[0]]= row[idx]
     return d
 
 #default for basic BasicAuth CHANGE
@@ -44,12 +47,39 @@ def home():
 #list available discussion forums GET
 @app.route('/forums', methods=['GET', 'POST'])
 def forum():
-
     #creating a new discussion forum
     if request.method == 'POST':
-
+        print('Posting forum')
     #request for all the present forums
     else:
+        query = 'SELECT * FROM Forums;'
+        '''
+            [
+                {
+                    "id": 1,
+                    "name": "redis",
+                    "creator": "alice"
+                },
+                {
+                    "id": 2,
+                    "name": "mongodb",
+                    "creator": "bob"
+                }
+            ]
+        '''
+        '''
+            Commands for accessing sqlite3
+            1. type sqlite3 into command
+            2. sqlite> prompt will appear
+            3. enter .read [File]
+            4. .tables will show if file was read
+        '''
+        conn = sqlite3.connect('forum.db')
+        conn.row_factory = dict_factory
+        cur = conn.cursor()
+        all_forums = cur.execute(query).fetchall()
+
+        return jsonify(all_forums)
 
 #create a new discussion forum POST
 # @app.route('/forums', methods=['POST'])
@@ -62,13 +92,26 @@ def thread(forum_id):
     #creating a new thread in a specified forum
     if request.method == 'POST':
         #posting a new thread
+        print('Posting forum')
     else:
+        query = 'SELECT * from Threads WHERE'
+        to_filter = []
         #return all the threads from the forum
+        if forum_id:
+            query += ' ForumId= '+str(forum_id)+';'
+            to_filter.append(forum_id)
+            conn = sqlite3.connect('forum.db')
+            conn.row_factory = dict_factory
+            cur = conn.cursor()
+            all_threads = cur.execute(query).fetchall()
 
+            return jsonify(all_threads)
+        if not forum_id:
+            return page_not_found(404)
 
 #create a new thread in a specified forums POST
 
-@app.route('')
+@app.route('/')
 
 
 #list posts to the specified thread GET
@@ -76,31 +119,24 @@ def thread(forum_id):
 @app.route('/forums/<forum_id>/<thread_id>', methods=['GET', 'POST'])
 def post(forum_id, thread_id):
     if request.method == 'POST':
+        print('Posting forum')
         #adding a new post to the specified thread
     else:
         #getting the posts for the specified thread
-
+        print('Posting forum')
 #add a new post to the specified thread POST
 
 @app.route('/users', methods=['POST'])
 def user():
-
+    print('Posting forum')
 #create a new user POST
 
 #changes a user's password PUT
-@app.route('users/<username>', methods=['PUT'])
+@app.route('/users/<username>', methods=['PUT'])
 def change_pass(username):
-
+    print('Posting forum')
 #
 
 
-
-
-
-
-
-
-
-
-
-app.run()
+if __name__ == "__main__":
+    app.run()
