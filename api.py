@@ -1,10 +1,13 @@
-from flask import Flask, Response, request, jsonify, render_template
+from flask import Flask, Response, request, jsonify, render_template, g
 import click
 from flask_basicauth import BasicAuth
 import sqlite3
 
 app = Flask(__name__)
 app.config["DEBUG"] = True
+
+# Global db variable
+DATABASE = 'forum.db'
 
 # @app.cli.command()
 
@@ -135,7 +138,25 @@ def user():
 @app.route('/users/<username>', methods=['PUT'])
 def change_pass(username):
     print('Posting forum')
-#
+
+# from http://flask.pocoo.org/docs/1.0/patterns/sqlite3/
+# Connects to and returns the db
+def get_db():
+    db = getattr(g, '_database', None)
+    if db is None:
+        db = g._database = sqlite3.connect(DATABASE)
+    return db
+
+#from http://flask.pocoo.org/docs/1.0/cli/
+# CLI command for initlizing the db
+@app.cli.command()
+def init_db():
+    with app.app_context():
+        db = get_db()
+        with app.open_resource('init.sql', mode='r') as f:
+            db.cursor().executescript(f.read())
+        db.commit()
+    print ('Database Initilaized')
 
 
 if __name__ == "__main__":
