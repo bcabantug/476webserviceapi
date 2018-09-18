@@ -6,7 +6,7 @@ web service api using flask and http basic authentication
 # Only need to do once
 # 1. Install virtualenv
   $ pip install virtualenv
-# 2. Create virtual environment
+# 2. Creates virtual environment files
   $ virtualenv venv
 
 # Needs to run for each virtual environment (each instance of terminal)
