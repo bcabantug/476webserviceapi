@@ -3,7 +3,6 @@ DROP TABLE IF EXISTS Forums;
 DROP TABLE IF EXISTS Threads;
 DROP TABLE IF EXISTS Posts;
 
-
 CREATE TABLE Users
 (
   `UserId` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
@@ -53,7 +52,7 @@ INSERT INTO Users
 VALUES
     ('cameron', 'test'),
     ('brian', 'test'),
-    ('sorryiforogtyourname', 'test');
+    ('elmer', 'test');
 
 INSERT INTO Forums
   (`CreatorId`, `ForumsName`)
