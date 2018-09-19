@@ -40,13 +40,6 @@ def dict_factory(cursor, row):
 # app.config['BASIC_AUTH_USERNAME'] = 'test'
 # app.config['BASIC_AUTH_PASSWORD'] = 'matrix'
 
-
-
-#list home page DEFAULT
-@app.route('/', methods=['GET'])
-def home():
-    return '<h1>Initial Page</h1>'
-
 #list available discussion forums GET
 @app.route('/forums', methods=['GET', 'POST'])
 def forum():
@@ -120,10 +113,18 @@ def thread(forum_id):
 #create a new thread in a specified forums POST
 
 @app.route('/')
+def index():
+    return render_template('index.html')
 
+@app.route('/login')
+def login():
+    return render_template('login.html')
+
+@app.route('/dashboard')
+def dashboard():
+    return render_template('dashboard.html')
 
 #list posts to the specified thread GET
-
 @app.route('/forums/<forum_id>/<thread_id>', methods=['GET', 'POST'])
 def post(forum_id, thread_id):
     if request.method == 'POST':
@@ -136,13 +137,28 @@ def post(forum_id, thread_id):
 
 @app.route('/users', methods=['POST'])
 def user():
-    print('Posting forum')
+    # curl -X POST -H "Content-Type: application/json" -d '{"username": "tuvwxyz", "password": "123" }' http://localhost:5000/users
+    data = request.get_json()
+    query = 'INSERT INTO Users (Username, Password) VALUES (?, ?);'
+    conn = sqlite3.connect('forum.db')
+    cur = conn.cursor()
+    # Need to use parameterised queries so API can insert values for username and
+    # password into the query at the places with a ?
+    # sources:
+    # https://stackoverflow.com/questions/32945910/python-3-sqlite3-incorrect-number-of-bindings
+    # https://stackoverflow.com/questions/32240718/dict-object-has-no-attribute-id
+    cur.execute(query, (data['username'], data['password']))
+    conn.commit()
+
+    return jsonify(data), 201
+
 #create a new user POST
 
 #changes a user's password PUT
 @app.route('/users/<username>', methods=['PUT'])
-def change_pass(username):
+def change_pass():
     print('Posting forum')
+<<<<<<< Updated upstream
 
 # from http://flask.pocoo.org/docs/1.0/patterns/sqlite3/
 # Connects to and returns the db
@@ -162,6 +178,8 @@ def init_db():
             db.cursor().executescript(f.read())
         db.commit()
     print ('Database Initilaized')
+=======
+>>>>>>> Stashed changes
 
 
 if __name__ == "__main__":
