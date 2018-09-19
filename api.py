@@ -1,5 +1,5 @@
-from flask import Flask, Response, request, jsonify, render_template, g
-import click
+from flask import Flask, Response, request, jsonify, render_template, g, abort
+#import click
 from flask_basicauth import BasicAuth
 import sqlite3
 
@@ -77,7 +77,7 @@ def forum():
             3. enter .read [File]
             4. .tables will show if file was read
         '''
-        conn = sqlite3.connect('forum.db')
+        conn = sqlite3.connect(DATABASE)
         conn.row_factory = dict_factory
         cur = conn.cursor()
         all_forums = cur.execute(query).fetchall()
@@ -103,14 +103,19 @@ def thread(forum_id):
         if forum_id:
             query += ' ForumId= '+str(forum_id)+';'
             to_filter.append(forum_id)
-            conn = sqlite3.connect('forum.db')
+            conn = sqlite3.connect(DATABASE)
             conn.row_factory = dict_factory
             cur = conn.cursor()
             all_threads = cur.execute(query).fetchall()
+            # If the the quey returns an empty result
+            # e.g. http://127.0.0.1:5000/forums/100
+            if all_threads == []:
+                abort(404)
 
             return jsonify(all_threads)
+        # What is an example of this case?
         if not forum_id:
-            return page_not_found(404)
+            abort(404)
 
 #create a new thread in a specified forums POST
 
@@ -122,11 +127,11 @@ def thread(forum_id):
 @app.route('/forums/<forum_id>/<thread_id>', methods=['GET', 'POST'])
 def post(forum_id, thread_id):
     if request.method == 'POST':
-        print('Posting forum')
+        return('Posting forum')
         #adding a new post to the specified thread
     else:
         #getting the posts for the specified thread
-        print('Posting forum')
+        return('Posting forum')
 #add a new post to the specified thread POST
 
 @app.route('/users', methods=['POST'])

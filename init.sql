@@ -30,9 +30,11 @@ CREATE TABLE Threads
 CREATE TABLE Posts
 (
   `PostId` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
+  `ThreadBelongsTo` INTEGER NOT NULL,
   `AuthorId` INTEGER NOT NULL,
   `PostsTimestamp` TEXT NOT NULL,
   `Message` TEXT NOT NULL,
+  FOREIGN KEY(`ThreadBelongsTo`) REFERENCES `Thread`(`ThreadId`) ON DELETE CASCADE,
   FOREIGN KEY(`AuthorId`) REFERENCES `Users`(`UserId`) ON DELETE CASCADE
 );
 
@@ -58,20 +60,20 @@ VALUES
 INSERT INTO Forums
   (`CreatorId`, `ForumsName`)
 VALUES
-  (1, 'Test1'),
-  (2, 'Test2'),
-  (3, 'Test3');
+  (1, 'Forum Test1'),
+  (2, 'Forum Test2'),
+  (3, 'Forum Test3');
 
 INSERT INTO Threads
   (`ForumId`, `ThreadsTitle`)
 VALUES
-  (1, 'Forum Test 1'),
-  (2, 'Forum Test 2'),
-  (3, 'Forum Test 3');
+  (1, 'Thread Test 1'),
+  (2, 'Thread Test 2'),
+  (3, 'Thread Test 3');
 
 INSERT INTO Posts
-  (`AuthorId`, `PostsTimestamp`, `Message`)
+  (`AuthorId`, `ThreadBelongsTo`, `PostsTimestamp`, `Message`)
 VALUES
-  (1, 'Tue, 05 Sep 2018 15:42:28 GMT', 'Thread Test 1'),
-  (2, 'Wed, 04 Sep 2018 15:42:28 GMT', 'Thread Test 2'),
-  (3, 'Tue, 03 Sep 2018 15:42:28 GMT', 'Thread Test 3');
+  (1, 1, 'Tue, 05 Sep 2018 15:42:28 GMT', 'Post Test 1'),
+  (2, 1, 'Wed, 04 Sep 2018 15:42:28 GMT', 'Post Test 2'),
+  (3, 2, 'Tue, 03 Sep 2018 15:42:28 GMT', 'Post Test 3');
