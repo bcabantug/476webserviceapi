@@ -2,6 +2,7 @@ from flask import Flask, Response, request, jsonify, render_template, g, abort
 #import click
 from flask_basicauth import BasicAuth
 import sqlite3
+import json
 
 app = Flask(__name__)
 app.config["DEBUG"] = True
@@ -22,7 +23,14 @@ class NewAuth(BasicAuth):
     def check_credentials(username, password):
         #compare the username and password to the db
         #if found, return
-        found = username == app.config['BASIC_AUTH_USERNAME'] and password == app.config['BASIC_AUTH_PASSWORD']
+        #found = username == app.config['BASIC_AUTH_USERNAME'] and password == app.config['BASIC_AUTH_PASSWORD']
+        found = False;
+        query = 'SELECT * from Users where Username = ? and password = ?'
+        conn = sqlite3.connect(DATABASE)
+        conn.row_factory = dict_factory
+        cur = conn.cursor()
+        all_forums = cur.execute(query, [username, password]).fetchall()
+
         if found:
             print('User authenticated')
 
@@ -114,7 +122,20 @@ def thread(forum_id):
 #create a new thread in a specified forums POST
 
 @app.route('/')
-def index():
+def index:
+    # Testing things
+    query = 'SELECT Username, Password from Users where Username = ? and password = ?'
+    conn = sqlite3.connect(DATABASE)
+    conn.row_factory = dict_factory
+    cur = conn.cursor()
+    all_forums = cur.execute(query, ['cameron', 'test']).fetchall()
+    # attrs = {}
+    # for value in all_forums:
+    #     attrs[value["Username"]] = value["Password"]
+    print(all_forums)
+    data = dict(all_forums)
+    #print(data[u'cameron'])
+    #print(all_forums[""])
     return render_template('index.html')
 
 @app.route('/login')
