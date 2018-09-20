@@ -26,15 +26,16 @@ def get_db():
 
 # From http://flask.pocoo.org/docs/1.0/patterns/sqlite3/
 # query: query as string; e.g. 'Select * from Users'
-# args: query arguments, leave empty if no args; e.g. ['cameron', 'test']
+# args: query arguments, leave empty if no args; e.g. ['user', 'password']
 # one: Set to true if only 1 row is required for query else keep false
-# returns results of the query I think in tuple format
+# returns results of the query, I think in tuple format
 def query_db(query, args=(), one=False):
     cur = get_db().execute(query, args)
     rv = cur.fetchall()
     cur.close()
     return (rv[0] if rv else None) if one else rv
 
+# TODO: Remove if not used
 # From http://flask.pocoo.org/docs/1.0/patterns/sqlite3/
 def make_dicts(cursor, row):
     return dict((cursor.description[idx][0], value)
@@ -51,12 +52,13 @@ def dict_factory(cursor, row):
 #sublass of BasicAuth
 class NewAuth(BasicAuth):
     #override of check_credentials
+    # returns true if the username and password matches else returns false
     def check_credentials(self, username, password):
         user = query_db('SELECT Username, Password from Users where Username = ? and password = ?', [username, password], one=True)
-        if user is None:
-            return False
-        else:
+        if user is not None:
             return True
+        else:
+            return False
 
 
 #default for basic BasicAuth CHANGE
@@ -138,6 +140,14 @@ def thread(forum_id):
 
 @app.route('/')
 def index():
+    # TODO: remove before submission
+    # NewAuth example code
+    basic_auth = NewAuth().check_credentials('cameron', 'test')
+    if basic_auth is True:
+        print 'Authenticated'
+    elif basic_auth is False:
+        print 'Not Authenticated'
+
     return render_template('index.html')
 
 @app.route('/login')
