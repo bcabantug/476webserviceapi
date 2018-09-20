@@ -12,37 +12,48 @@ DATABASE = 'forum.db'
 
 # @app.cli.command()
 
-#definiton to establish the connection to the db once
+# definiton to establish the connection to the db once
 def establish_dbconn(dbname, command):
     print ('db connected')
+
+# From http://flask.pocoo.org/docs/1.0/patterns/sqlite3/
+# Connects to and returns the db
+def get_db():
+    db = getattr(g, '_database', None)
+    if db is None:
+        db = g._database = sqlite3.connect(DATABASE)
+    return db
+
+# From http://flask.pocoo.org/docs/1.0/patterns/sqlite3/
+def query_db(query, args=(), one=False):
+    cur = get_db().execute(query, args)
+    rv = cur.fetchall()
+    cur.close()
+    return (rv[0] if rv else None) if one else rv
+
+# From http://flask.pocoo.org/docs/1.0/patterns/sqlite3/
+def make_dicts(cursor, row):
+    return dict((cursor.description[idx][0], value)
+                for idx, value in enumerate(row))
+
+# dictionary function taken from programminghistorian for placement purposes
+def dict_factory(cursor, row):
+    d={}
+    for idx, col in enumerate(cursor.description):
+        d[col[0]]= row[idx]
+    return d
 
 
 #sublass of BasicAuth
 class NewAuth(BasicAuth):
     #override of check_credentials
     def check_credentials(username, password):
-        #compare the username and password to the db
-        #if found, return
-        #found = username == app.config['BASIC_AUTH_USERNAME'] and password == app.config['BASIC_AUTH_PASSWORD']
-        found = False;
-        query = 'SELECT * from Users where Username = ? and password = ?'
-        conn = sqlite3.connect(DATABASE)
-        conn.row_factory = dict_factory
-        cur = conn.cursor()
-        all_forums = cur.execute(query, [username, password]).fetchall()
+        user = query_db('SELECT Username, Password from Users where Username = ? and password = ?', [username, password], one=True)
+        if user is None:
+            return False
+        else:
+            return True
 
-        if found:
-            print('User authenticated')
-
-# new_auth = NewAuth(app)
-
-
-#dictionary function taken from programminghistorian for placement purposes
-def dict_factory(cursor, row):
-    d={}
-    for idx, col in enumerate(cursor.description):
-        d[col[0]]= row[idx]
-    return d
 
 #default for basic BasicAuth CHANGE
 # app.config['BASIC_AUTH_USERNAME'] = 'test'
@@ -123,19 +134,9 @@ def thread(forum_id):
 
 @app.route('/')
 def index():
-    # Testing things
-    query = 'SELECT Username, Password from Users where Username = ? and password = ?'
-    conn = sqlite3.connect(DATABASE)
-    conn.row_factory = dict_factory
-    cur = conn.cursor()
-    all_forums = cur.execute(query, ['cameron', 'test']).fetchall()
-    # attrs = {}
-    # for value in all_forums:
-    #     attrs[value["Username"]] = value["Password"]
-    print(all_forums)
-    data = dict(all_forums)
-    #print(data[u'cameron'])
-    #print(all_forums[""])
+
+
+
     return render_template('index.html')
 
 @app.route('/login')
@@ -188,14 +189,6 @@ def user():
 @app.route('/users/<username>', methods=['PUT'])
 def change_pass():
     print('Posting forum')
-
-# from http://flask.pocoo.org/docs/1.0/patterns/sqlite3/
-# Connects to and returns the db
-def get_db():
-    db = getattr(g, '_database', None)
-    if db is None:
-        db = g._database = sqlite3.connect(DATABASE)
-    return db
 
 #from http://flask.pocoo.org/docs/1.0/cli/
 # CLI command for initlizing the db
