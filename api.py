@@ -171,24 +171,37 @@ def post(forum_id, thread_id):
 def user():
     # curl -X POST -H "Content-Type: application/json" -d '{"username": "tuvwxyz", "password": "123" }' http://localhost:5000/users
     data = request.get_json()
-    query = 'INSERT INTO Users (Username, Password) VALUES (?, ?);'
+    username = data['username']
+    password = data['password']
+    query = 'SELECT Username FROM Users WHERE Username=?'
     conn = sqlite3.connect(DATABASE)
     cur = conn.cursor()
-    # Need to use parameterised queries so API can insert values for username and
-    # password into the query at the places with a ?
-    # sources:
-    # https://stackoverflow.com/questions/32945910/python-3-sqlite3-incorrect-number-of-bindings
-    # https://stackoverflow.com/questions/32240718/dict-object-has-no-attribute-id
-    cur.execute(query, (data['username'], data['password']))
-    conn.commit()
 
-    return jsonify(data), 201
+    # https://stackoverflow.com/questions/16856647/sqlite3-programmingerror-incorrect-number-of-bindings-supplied-the-current-sta
+    # Was running into an issue regarding the execute statement and needed to include a ',' after data['username'] in order for the query
+    # to be ran
+    user = cur.execute(query, (data['username'],)).fetchall()
+
+    if user == []:
+        query = 'INSERT INTO Users (Username, Password) VALUES (?, ?);'
+        conn = sqlite3.connect(DATABASE)
+        cur = conn.cursor()
+        # Need to use parameterised queries so API can insert values for username and
+        # password into the query at the places with a ?
+        # sources:
+        # https://stackoverflow.com/questions/32945910/python-3-sqlite3-incorrect-number-of-bindings
+        # https://stackoverflow.com/questions/32240718/dict-object-has-no-attribute-id
+        cur.execute(query, (data['username'], data['password']))
+        conn.commit()
+        return jsonify({'success': True}), 201, {'ContentType': 'application/json'}
+    else:
+        return abort(409)
 
 #create a new user POST
 
 #changes a user's password PUT
 @app.route('/users/<username>', methods=['PUT'])
-def change_pass():
+def change_pass(username):
     print('Posting forum')
 
 #from http://flask.pocoo.org/docs/1.0/cli/
