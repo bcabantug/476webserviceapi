@@ -25,6 +25,10 @@ def get_db():
     return db
 
 # From http://flask.pocoo.org/docs/1.0/patterns/sqlite3/
+# query: query as string; e.g. 'Select * from Users'
+# args: query arguments, leave empty if no args; e.g. ['cameron', 'test']
+# one: Set to true if only 1 row is required for query else keep false
+# returns results of the query I think in tuple format
 def query_db(query, args=(), one=False):
     cur = get_db().execute(query, args)
     rv = cur.fetchall()
@@ -47,7 +51,7 @@ def dict_factory(cursor, row):
 #sublass of BasicAuth
 class NewAuth(BasicAuth):
     #override of check_credentials
-    def check_credentials(username, password):
+    def check_credentials(self, username, password):
         user = query_db('SELECT Username, Password from Users where Username = ? and password = ?', [username, password], one=True)
         if user is None:
             return False
@@ -134,9 +138,6 @@ def thread(forum_id):
 
 @app.route('/')
 def index():
-
-
-
     return render_template('index.html')
 
 @app.route('/login')
