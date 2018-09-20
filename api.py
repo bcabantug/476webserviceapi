@@ -94,6 +94,7 @@ def thread(forum_id):
         to_filter = []
         #return all the threads from the forum
         if forum_id:
+            # TODO: Add timestamp to query
             query += ' ForumId= '+str(forum_id)+';'
             to_filter.append(forum_id)
             conn = sqlite3.connect(DATABASE)
@@ -104,8 +105,8 @@ def thread(forum_id):
             # e.g. http://127.0.0.1:5000/forums/100
             if all_threads == []:
                 abort(404)
-
-            return jsonify(all_threads)
+            else:
+                return jsonify(all_threads)
         # What is an example of this case?
         if not forum_id:
             abort(404)
@@ -129,18 +130,26 @@ def dashboard():
 def post(forum_id, thread_id):
     if request.method == 'POST':
         return('Posting forum')
-        #adding a new post to the specified thread
-    else:
-        #getting the posts for the specified thread
-        return('Posting forum')
-#add a new post to the specified thread POST
+        # TODO:adding a new post to the specified thread
+
+    elif request.method == 'GET':
+        # Get all posts from specified thread
+        data = request.get_json()
+        query = 'SELECT Username as author, Message as text, PostsTimestamp as timestamp from Posts join Users on AuthorId = UserId and ThreadBelongsTo = ?;'
+        conn = sqlite3.connect(DATABASE)
+        cur = conn.cursor()
+        allPosts = cur.execute(query, [thread_id]).fetchall()
+        if allPosts == []:
+            return abort(404)
+        else:
+            return jsonify(allPosts)
 
 @app.route('/users', methods=['POST'])
 def user():
     # curl -X POST -H "Content-Type: application/json" -d '{"username": "tuvwxyz", "password": "123" }' http://localhost:5000/users
     data = request.get_json()
     query = 'INSERT INTO Users (Username, Password) VALUES (?, ?);'
-    conn = sqlite3.connect('forum.db')
+    conn = sqlite3.connect(DATABASE)
     cur = conn.cursor()
     # Need to use parameterised queries so API can insert values for username and
     # password into the query at the places with a ?
@@ -158,7 +167,6 @@ def user():
 @app.route('/users/<username>', methods=['PUT'])
 def change_pass():
     print('Posting forum')
-<<<<<<< Updated upstream
 
 # from http://flask.pocoo.org/docs/1.0/patterns/sqlite3/
 # Connects to and returns the db
@@ -178,8 +186,6 @@ def init_db():
             db.cursor().executescript(f.read())
         db.commit()
     print ('Database Initilaized')
-=======
->>>>>>> Stashed changes
 
 
 if __name__ == "__main__":
