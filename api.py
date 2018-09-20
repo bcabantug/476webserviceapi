@@ -212,7 +212,38 @@ def user():
 #changes a user's password PUT
 @app.route('/users/<username>', methods=['PUT'])
 def change_pass(username):
-    print('Posting forum')
+    # auth contains the username and Password
+    auth = request.authorization
+
+    # check_auth returns True or False depending on the credentials
+    check_auth = NewAuth().check_credentials(auth.username, auth.password)
+
+    # password contain the value of the new password after getting it from data with the appropriate key
+    data = request.get_json()
+    password = data.get('password')
+
+    # Query the db to determine if the username has an account
+    query = "SELECT Username FROM Users WHERE Username=?"
+    conn = sqlite3.connect(DATABASE)
+    cur = conn.cursor()
+    # https://stackoverflow.com/questions/14861162/cursor-fetchall-returns-extra-characters-using-mysqldb-and-python
+    # If using fetchall() there is a potential error because it returns a list of tuples rather than just one tuple
+    user = cur.execute(query, [auth.username]).fetchone()
+
+    if user == []:
+        return abort(404)
+    elif auth is False or check_auth is False:
+        return abort(401)
+    elif auth.username != username:
+        return abort(409)
+    else:
+        query = "UPDATE Users SET Password=? WHERE Username=?"
+        conn = sqlite3.connect(DATABASE)
+        cur = conn.cursor()
+        cur.execute(query, (password, username))
+        conn.commit()
+
+        return jsonify({'success': True}), 200, {'ContentType': 'application/json'}
 
 #from http://flask.pocoo.org/docs/1.0/cli/
 # CLI command for initlizing the db
