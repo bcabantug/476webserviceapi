@@ -122,7 +122,7 @@ def thread(forum_id):
 #create a new thread in a specified forums POST
 
 @app.route('/')
-def index:
+def index():
     # Testing things
     query = 'SELECT Username, Password from Users where Username = ? and password = ?'
     conn = sqlite3.connect(DATABASE)
