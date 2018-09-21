@@ -70,6 +70,23 @@ class NewAuth(BasicAuth):
 def forum():
     #creating a new discussion forum
     if request.method == 'POST':
+        # auth contains the username and Password
+        auth = request.authorization
+        # check_auth returns True or False depending on the credentials
+        check_auth = NewAuth().check_credentials(auth.username, auth.password)
+
+        if check_auth is False:
+            abort(401)
+
+        forum_name = request.get_json()
+        print(forum_name)
+        # query = 'INSERT into Forums (`CreatorId`, `ForumsName`) Values ((Select UserId from Users where Username = ?), ?);'
+        # conn = sqlite3.connect(DATABASE)
+        # cur = conn.cursor()
+        # cur.execute(query, (data[auth.username], data[]))
+        # conn.commit()
+
+
         print('Posting forum')
     #request for all the present forums
     else:
