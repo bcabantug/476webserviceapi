@@ -78,16 +78,35 @@ def forum():
         if check_auth is False:
             abort(401)
 
-        forum_name = request.get_json()
-        print(forum_name)
+        #gets the json for the name request
+        forum_submit = request.get_json()
+        #parse the name from JSON
+        forum_name = forum_submit.get('name')
+
+        #query db for userId
+        query = 'SELECT UserID FROM Users WHERE Username=?'
+        conn = sqlite3.connect(DATABASE)
+        cur = conn.cursor()
+
+        user = cur.execute(query, [auth.username]).fetchone()
+
+        print(user)
+
+
+
+
+
         # query = 'INSERT into Forums (`CreatorId`, `ForumsName`) Values ((Select UserId from Users where Username = ?), ?);'
         # conn = sqlite3.connect(DATABASE)
         # cur = conn.cursor()
-        # cur.execute(query, (data[auth.username], data[]))
+        # cur.execute(query, ([auth.username], forum_name))
         # conn.commit()
 
 
-        print('Posting forum')
+        return 'Posting forum'
+
+        # flask.response('')
+
     #request for all the present forums
     else:
         query = 'SELECT * FROM Forums;'
@@ -161,9 +180,9 @@ def index():
     # NewAuth example code
     basic_auth = NewAuth().check_credentials('cameron', 'test')
     if basic_auth is True:
-        print 'Authenticated'
+        print ('Authenticated')
     elif basic_auth is False:
-        print 'Not Authenticated'
+        print ('Not Authenticated')
 
     return render_template('index.html')
 
