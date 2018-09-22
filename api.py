@@ -1,5 +1,4 @@
 from flask import Flask, Response, request, jsonify, render_template, g, abort
-#import click
 from flask_basicauth import BasicAuth
 import sqlite3
 import json
@@ -12,6 +11,7 @@ DATABASE = 'forum.db'
 
 # @app.cli.command()
 
+# TODO: remove if not used
 # definiton to establish the connection to the db once
 def establish_dbconn(dbname, command):
     print ('db connected')
@@ -22,21 +22,27 @@ def get_db():
     db = getattr(g, '_database', None)
     if db is None:
         db = g._database = sqlite3.connect(DATABASE)
+        db.row_factory = sqlite3.Row
     return db
+
+# From http://flask.pocoo.org/docs/1.0/patterns/sqlite3/
+@app.teardown_appcontext
+def close_connection(exception):
+    db = getattr(g, '_database', None)
+    if db is not None:
+        db.close()
 
 # From http://flask.pocoo.org/docs/1.0/patterns/sqlite3/
 # query: query as string; e.g. 'Select * from Users'
 # args: query arguments, leave empty if no args; e.g. ['user', 'password']
 # one: Set to true if only 1 row is required for query else keep false
-# returns results of the query, I think in tuple format
+# returns results of the query
 def query_db(query, args=(), one=False):
     cur = get_db().execute(query, args)
     rv = cur.fetchall()
     cur.close()
     return (rv[0] if rv else None) if one else rv
 
-# TODO: Remove if not used
-# From http://flask.pocoo.org/docs/1.0/patterns/sqlite3/
 def make_dicts(cursor, row):
     return dict((cursor.description[idx][0], value)
                 for idx, value in enumerate(row))
@@ -74,38 +80,27 @@ def forum():
         auth = request.authorization
         # check_auth returns True or False depending on the credentials
         check_auth = NewAuth().check_credentials(auth.username, auth.password)
-
+        # Abort 401 if not authorized
         if check_auth is False:
             abort(401)
 
-        #gets the json for the name request
+        # #gets the json for the name request
         forum_submit = request.get_json()
         #parse the name from JSON
         forum_name = forum_submit.get('name')
 
-        #query db for userId
-        query = 'SELECT UserID FROM Users WHERE Username=?'
-        conn = sqlite3.connect(DATABASE)
-        cur = conn.cursor()
-
-        user = cur.execute(query, [auth.username]).fetchone()
-
-        print(user)
-
-
-
-
-
-        # query = 'INSERT into Forums (`CreatorId`, `ForumsName`) Values ((Select UserId from Users where Username = ?), ?);'
-        # conn = sqlite3.connect(DATABASE)
-        # cur = conn.cursor()
-        # cur.execute(query, ([auth.username], forum_name))
-        # conn.commit()
-
-
-        return 'Posting forum'
-
-        # flask.response('')
+        # If forumn name does't exist insert it into the db and return success
+        # Else abort 409
+        if query_db('SELECT ForumsName from Forums where ForumsName = ?', [request.get_json().get('name')], one=True) is None:
+            print(auth.username, str(forum_name))
+            query = 'INSERT into Forums (CreatorId, ForumsName) Values ((Select UserId from Users where Username = ?), ?);'
+            conn = sqlite3.connect(DATABASE)
+            cur = conn.cursor()
+            cur.execute(query, (auth.username, str(forum_name)))
+            conn.commit()
+            return jsonify({'success': True}), 200, {'ContentType': 'application/json'}
+        else:
+            abort(409)
 
     #request for all the present forums
     else:

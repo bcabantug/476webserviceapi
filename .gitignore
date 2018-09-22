@@ -1,5 +1,4 @@
 init_db.py
-venv/
 api.pyc
 forum.db
 node_modules/
