@@ -215,7 +215,9 @@ def post(forum_id, thread_id):
         data = request.get_json()
         query = 'SELECT Username as author, Message as text, PostsTimestamp as timestamp from Posts join Users on AuthorId = UserId and ThreadBelongsTo = ?;'
         conn = sqlite3.connect(DATABASE)
+        conn.row_factory = dict_factory
         cur = conn.cursor()
+        # all_threads = cur.execute(query).fetchall()
         allPosts = cur.execute(query, [thread_id]).fetchall()
         if allPosts == []:
             return abort(404)
