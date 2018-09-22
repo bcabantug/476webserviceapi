@@ -17,7 +17,7 @@ def establish_dbconn(dbname, command):
     print ('db connected')
 
 # From http://flask.pocoo.org/docs/1.0/patterns/sqlite3/
-# Connects to and returns the db
+# Connects to and returns the db used in init_db() and query_db()
 def get_db():
     db = getattr(g, '_database', None)
     if db is None:
@@ -26,6 +26,7 @@ def get_db():
     return db
 
 # From http://flask.pocoo.org/docs/1.0/patterns/sqlite3/
+# Closes the db at the end of each rquest for get_db()
 @app.teardown_appcontext
 def close_connection(exception):
     db = getattr(g, '_database', None)
@@ -42,10 +43,6 @@ def query_db(query, args=(), one=False):
     rv = cur.fetchall()
     cur.close()
     return (rv[0] if rv else None) if one else rv
-
-def make_dicts(cursor, row):
-    return dict((cursor.description[idx][0], value)
-                for idx, value in enumerate(row))
 
 # dictionary function taken from programminghistorian for placement purposes
 def dict_factory(cursor, row):
@@ -145,6 +142,21 @@ def thread(forum_id):
         #posting a new thread
         print('Posting forum')
     elif request.method == 'GET':
+        # Query to be used here
+        '''SELECT Forums.ForumId as id, title, creator, timestamp
+            from (select UserName as creator, timestamp, ThreadBelongsTo, title
+        		    from (select AuthorId, PostsTimestamp as timestamp, ThreadBelongsTo, ThreadsTitle as title
+        				from Posts
+        				join Threads
+        				on Posts.ThreadBelongsTo = Threads.ThreadId
+        				group by Threads.ThreadId
+        				having min(Posts.PostId)
+        				order by Posts.PostId)
+    		         join Users
+    		         on AuthorId = Users.UserId)
+            join Forums
+            on ThreadBelongsTo = Forums.ForumId'''
+
         query = 'SELECT * from Threads WHERE'
         to_filter = []
         #return all the threads from the forum
