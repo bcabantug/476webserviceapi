@@ -74,5 +74,6 @@ INSERT INTO Posts
   (`AuthorId`, `ThreadBelongsTo`, `PostsTimestamp`, `Message`)
 VALUES
   (1, 1, 'Tue, 05 Sep 2018 15:42:28 GMT', 'Post Test 1'),
-  (2, 1, 'Wed, 04 Sep 2018 15:42:28 GMT', 'Post Test 2'),
-  (3, 2, 'Tue, 03 Sep 2018 15:42:28 GMT', 'Post Test 3');
+  (2, 1, 'Wed, 04 Sep 2018 15:43:28 GMT', 'Post Test 2'),
+  (3, 2, 'Tue, 03 Sep 2018 15:42:28 GMT', 'Post Test 3'),
+  (2, 2, 'Wed, 04 Sep 2018 15:43:28 GMT', 'Post Test 4');
