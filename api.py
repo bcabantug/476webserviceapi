@@ -83,12 +83,10 @@ def forum():
         # Abort 401 if not authorized
         if check_auth is False:
             abort(401)
-
         # #gets the json for the name request
         forum_submit = request.get_json()
         #parse the name from JSON
         forum_name = forum_submit.get('name')
-
         # If forumn name does't exist insert it into the db and return success
         # Else abort 409
         if query_db('SELECT ForumsName from Forums where ForumsName = ?', [request.get_json().get('name')], one=True) is None:
@@ -98,12 +96,11 @@ def forum():
             cur = conn.cursor()
             cur.execute(query, (auth.username, str(forum_name)))
             conn.commit()
-            return jsonify({'success': True}), 200, {'ContentType': 'application/json'}
+            return jsonify({'success': True}), 201, {'ContentType': 'application/json'}
         else:
             abort(409)
-
     #request for all the present forums
-    else:
+    elif request.method == 'GET':
         query = 'SELECT * FROM Forums;'
         '''
             [
@@ -132,6 +129,8 @@ def forum():
         all_forums = cur.execute(query).fetchall()
 
         return jsonify(all_forums)
+    else:
+        abort(405)
 
 #create a new discussion forum POST
 # @app.route('/forums', methods=['POST'])
@@ -145,12 +144,12 @@ def thread(forum_id):
     if request.method == 'POST':
         #posting a new thread
         print('Posting forum')
-    else:
+    elif request.method == 'GET':
         query = 'SELECT * from Threads WHERE'
         to_filter = []
         #return all the threads from the forum
         if forum_id:
-            # TODO: Add timestamp to query
+            # TODO: Add timestamp to query and proper json identifiers
             query += ' ForumId= '+str(forum_id)+';'
             to_filter.append(forum_id)
             conn = sqlite3.connect(DATABASE)
@@ -166,6 +165,8 @@ def thread(forum_id):
         # What is an example of this case?
         if not forum_id:
             abort(404)
+    else:
+        abort(405)
 
 #create a new thread in a specified forums POST
 
