@@ -259,9 +259,9 @@ def change_pass(username):
     cur = conn.cursor()
     # https://stackoverflow.com/questions/14861162/cursor-fetchall-returns-extra-characters-using-mysqldb-and-python
     # If using fetchall() there is a potential error because it returns a list of tuples rather than just one tuple
-    user = cur.execute(query, [auth.username]).fetchone()
+    user = cur.execute(query, [data.get('username')]).fetchone()
 
-    if user == []:
+    if user == None:
         return abort(404)
     elif auth is False or check_auth is False:
         return abort(401)
