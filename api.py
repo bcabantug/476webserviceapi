@@ -155,7 +155,8 @@ def thread(forum_id):
     		         join Users
     		         on AuthorId = Users.UserId)
             join Forums
-            on ThreadBelongsTo = Forums.ForumId'''
+            on id = ?
+            order by id desc'''
 
         query = 'SELECT * from Threads WHERE'
         to_filter = []
