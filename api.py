@@ -158,17 +158,17 @@ def thread(forum_id):
             on id = ?
             order by id desc'''
 
-        query = 'SELECT * from Threads WHERE'
+        query = 'SELECT Forums.ForumId as id, title, creator, timestamp from (select UserName as creator, timestamp, ThreadBelongsTo, title from (select AuthorId, PostsTimestamp as timestamp, ThreadBelongsTo, ThreadsTitle as title from Posts join Threads on Posts.ThreadBelongsTo = Threads.ThreadId group by Threads.ThreadId having min(Posts.PostId) order by Posts.PostId) join Users on AuthorId = Users.UserId) join Forums on id = ? order by id desc'
         to_filter = []
         #return all the threads from the forum
         if forum_id:
             # TODO: Add timestamp to query and proper json identifiers
-            query += ' ForumId= '+str(forum_id)+';'
-            to_filter.append(forum_id)
+            # query += ' ForumId= '+str(forum_id)+';'
+            # to_filter.append(forum_id)
             conn = sqlite3.connect(DATABASE)
             conn.row_factory = dict_factory
             cur = conn.cursor()
-            all_threads = cur.execute(query).fetchall()
+            all_threads = cur.execute(query, [str(forum_id)]).fetchall()
             # If the the quey returns an empty result
             # e.g. http://127.0.0.1:5000/forums/100
             if all_threads == []:
