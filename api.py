@@ -158,7 +158,7 @@ def thread(forum_id):
             on id = ?
             order by id desc'''
 
-        query = 'SELECT Forums.ForumId as id, title, creator, timestamp from (select UserName as creator, timestamp, ThreadBelongsTo, title from (select AuthorId, PostsTimestamp as timestamp, ThreadBelongsTo, ThreadsTitle as title from Posts join Threads on Posts.ThreadBelongsTo = Threads.ThreadId group by Threads.ThreadId having min(Posts.PostId) order by Posts.PostId) join Users on AuthorId = Users.UserId) join Forums on id = ? order by id desc'
+        query = 'SELECT Forums.ForumId as id, title, creator, timestamp from (select UserName as creator, timestamp, ThreadBelongsTo, title from (select AuthorId, PostsTimestamp as timestamp, ThreadBelongsTo, ThreadsTitle as title from Posts join Threads on Posts.ThreadBelongsTo = Threads.ThreadId group by Threads.ThreadId having min(Posts.PostId) order by Posts.PostsTimestamp) join Users on AuthorId = Users.UserId) join Forums on id = ? order by id desc'
         to_filter = []
         #return all the threads from the forum
         if forum_id:
