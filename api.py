@@ -52,7 +52,7 @@ def dict_factory(cursor, row):
     return d
 
 
-#sublass of BasicAuth
+#subclass of BasicAuth (based off Flask-BasicAuth extension)
 class NewAuth(BasicAuth):
     #override of check_credentials
     # returns true if the username and password matches else returns false
@@ -64,9 +64,18 @@ class NewAuth(BasicAuth):
             return False
 
 
-#default for basic BasicAuth CHANGE
-# app.config['BASIC_AUTH_USERNAME'] = 'test'
-# app.config['BASIC_AUTH_PASSWORD'] = 'matrix'
+#function to check the auth object for present authorization
+def auth_check(auth):
+    #auth = request.authorization
+    if (auth) == None:
+        abort(401)
+    else:
+        # check_auth returns True or False depending on the credentials
+        check_auth = NewAuth().check_credentials(auth.username, auth.password)
+        if check_auth is False:
+            abort(401)
+
+
 
 #list available discussion forums GET
 @app.route('/forums', methods=['GET', 'POST'])
@@ -75,12 +84,16 @@ def forum():
     if request.method == 'POST':
         # auth contains the username and Password
         auth = request.authorization
-        # check_auth returns True or False depending on the credentials
-        check_auth = NewAuth().check_credentials(auth.username, auth.password)
-        # Abort 401 if not authorized
-        if check_auth is False:
-            abort(401)
+        # # check_auth returns True or False depending on the credentials
+        # check_auth = NewAuth().check_credentials(auth.username, auth.password)
+        # # Abort 401 if not authorized
+        # if check_auth is False:
+        #     abort(401)
         # #gets the json for the name request
+
+        auth_check(auth)
+
+
         forum_submit = request.get_json()
         #parse the name from JSON
         forum_name = forum_submit.get('name')
@@ -250,7 +263,7 @@ def user():
     # https://stackoverflow.com/questions/16856647/sqlite3-programmingerror-incorrect-number-of-bindings-supplied-the-current-sta
     # Was running into an issue regarding the execute statement and needed to include a ',' after data['username'] in order for the query
     # to be ran
-    user = cur.execute(query, (data['username'],)).fetchall()
+    user = cur.execute(query, (username,)).fetchall()
 
     if user == []:
         query = 'INSERT INTO Users (Username, Password) VALUES (?, ?);'
@@ -291,10 +304,13 @@ def change_pass(username):
     user = cur.execute(query, [data.get('username')]).fetchone()
 
     if user == None:
+        print ("hah not found")
         return abort(404)
     elif auth is False or check_auth is False:
+        print ("wrong password dummy")
         return abort(401)
     elif auth.username != username:
+        print ("hey you, stop it")
         return abort(409)
     else:
         query = "UPDATE Users SET Password=? WHERE Username=?"
