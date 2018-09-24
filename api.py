@@ -143,22 +143,22 @@ def thread(forum_id):
         print('Posting forum')
     elif request.method == 'GET':
         # Query to be used here
-        '''SELECT Forums.ForumId as id, title, creator, timestamp
-            from (select UserName as creator, timestamp, ThreadBelongsTo, title
-        		    from (select AuthorId, PostsTimestamp as timestamp, ThreadBelongsTo, ThreadsTitle as title
-        				from Posts
-        				join Threads
-        				on Posts.ThreadBelongsTo = Threads.ThreadId
-        				group by Threads.ThreadId
-        				having min(Posts.PostId)
-        				order by Posts.PostId)
-    		         join Users
-    		         on AuthorId = Users.UserId)
-            join Forums
-            on id = ?
-            order by id desc'''
+        '''SELECT id, title, Users.Username as creator, timestamp
+            from (select id, AuthorId, timestamp, title
+	           from (select Threads.ThreadId as id, AuthorId, timestamp, Threads.ThreadsTitle as title, Threads.ForumId as Fid
+			            from (select ThreadBelongsTo, AuthorId, PostsTimestamp as timestamp, Posts.PostId from Posts)
+			                  join Threads
+			                  on ThreadBelongsTo = Threads.ThreadId
+			                  group by Threads.ThreadId
+			                  having max(PostId)
+			                  order by PostId desc)
+	                    join Forums
+	                    on Fid = Forums.ForumId
+	                    where Forums.ForumId = ?)
+                join Users
+                where AuthorId = Users.UserId'''
 
-        query = 'SELECT Forums.ForumId as id, title, creator, timestamp from (select UserName as creator, timestamp, ThreadBelongsTo, title from (select AuthorId, PostsTimestamp as timestamp, ThreadBelongsTo, ThreadsTitle as title from Posts join Threads on Posts.ThreadBelongsTo = Threads.ThreadId group by Threads.ThreadId having min(Posts.PostId) order by Posts.PostsTimestamp) join Users on AuthorId = Users.UserId) join Forums on id = ? order by id desc'
+        query = '''SELECT id, title, Users.Username as creator, timestamp from (select id, AuthorId, timestamp, title from (select Threads.ThreadId as id, AuthorId, timestamp, Threads.ThreadsTitle as title, Threads.ForumId as Fid from (select ThreadBelongsTo, AuthorId, PostsTimestamp as timestamp, Posts.PostId from Posts) join Threads on ThreadBelongsTo = Threads.ThreadId group by Threads.ThreadId having max(PostId) order by PostId desc) join Forums on Fid = Forums.ForumId where Forums.ForumId = ?) join Users where AuthorId = Users.UserId'''
         to_filter = []
         #return all the threads from the forum
         if forum_id:
