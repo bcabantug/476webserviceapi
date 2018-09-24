@@ -22,7 +22,7 @@ def get_db():
     db = getattr(g, '_database', None)
     if db is None:
         db = g._database = sqlite3.connect(DATABASE)
-        db.row_factory = sqlite3.Row
+        db.row_factory = dict_factory
     return db
 
 # From http://flask.pocoo.org/docs/1.0/patterns/sqlite3/
@@ -139,8 +139,22 @@ def forum():
 def thread(forum_id):
     #creating a new thread in a specified forum
     if request.method == 'POST':
-        #posting a new thread
-        print('Posting forum')
+        # auth contains the username and Password
+        auth = request.authorization
+        if (auth) == None:
+            abort(401)
+        else:
+            # check_auth returns True or False depending on the credentials
+            check_auth = NewAuth().check_credentials(auth.username, auth.password)
+            if check_auth is False:
+                abort(401)
+
+        if forum_id:
+            user = query_db('SELECT UserId from Users where Username = ?;', [str(auth.username)])
+            #print(user.get('UserId'))
+            return abort(400)
+        else:
+            return abort(404)
     elif request.method == 'GET':
         # Query to be used here
         '''SELECT id, title, Users.Username as creator, timestamp
@@ -158,17 +172,16 @@ def thread(forum_id):
                 join Users
                 where AuthorId = Users.UserId'''
 
-        query = '''SELECT id, title, Users.Username as creator, timestamp from (select id, AuthorId, timestamp, title from (select Threads.ThreadId as id, AuthorId, timestamp, Threads.ThreadsTitle as title, Threads.ForumId as Fid from (select ThreadBelongsTo, AuthorId, PostsTimestamp as timestamp, Posts.PostId from Posts) join Threads on ThreadBelongsTo = Threads.ThreadId group by Threads.ThreadId having max(PostId) order by PostId desc) join Forums on Fid = Forums.ForumId where Forums.ForumId = ?) join Users where AuthorId = Users.UserId'''
+        query = 'SELECT id, title, Users.Username as creator, timestamp from (select id, AuthorId, timestamp, title from (select Threads.ThreadId as id, AuthorId, timestamp, Threads.ThreadsTitle as title, Threads.ForumId as Fid from (select ThreadBelongsTo, AuthorId, PostsTimestamp as timestamp, Posts.PostId from Posts) join Threads on ThreadBelongsTo = Threads.ThreadId group by Threads.ThreadId having max(PostId) order by PostId desc) join Forums on Fid = Forums.ForumId where Forums.ForumId = ?) join Users where AuthorId = Users.UserId'
         to_filter = []
         #return all the threads from the forum
         if forum_id:
-            # TODO: Add timestamp to query and proper json identifiers
-            # query += ' ForumId= '+str(forum_id)+';'
-            # to_filter.append(forum_id)
             conn = sqlite3.connect(DATABASE)
             conn.row_factory = dict_factory
             cur = conn.cursor()
             all_threads = cur.execute(query, [str(forum_id)]).fetchall()
+            test = query_db(query, [int(forum_id)])
+            print(test)
             # If the the quey returns an empty result
             # e.g. http://127.0.0.1:5000/forums/100
             if all_threads == []:
