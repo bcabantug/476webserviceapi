@@ -111,7 +111,7 @@ def forum():
             abort(409)
     #request for all the present forums
     elif request.method == 'GET':
-        query = 'SELECT * FROM Forums;'
+        query = 'SELECT Users.Username as creator, Forums.ForumId as id, Forums.ForumsName as name FROM Forums, Users where CreatorId = UserId;'
         '''
             [
                 {
