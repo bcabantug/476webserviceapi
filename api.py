@@ -2,6 +2,8 @@ from flask import Flask, Response, request, jsonify, render_template, g, abort
 from flask_basicauth import BasicAuth
 import sqlite3
 import json
+from datetime import datetime
+from time import gmtime, strftime
 
 app = Flask(__name__)
 app.config["DEBUG"] = True
@@ -51,7 +53,6 @@ def dict_factory(cursor, row):
         d[col[0]]= row[idx]
     return d
 
-
 #subclass of BasicAuth (based off Flask-BasicAuth extension)
 class NewAuth(BasicAuth):
     #override of check_credentials
@@ -100,12 +101,12 @@ def forum():
         # If forumn name does't exist insert it into the db and return success
         # Else abort 409
         if query_db('SELECT ForumsName from Forums where ForumsName = ?', [request.get_json().get('name')], one=True) is None:
-            print(auth.username, str(forum_name))
             query = 'INSERT into Forums (CreatorId, ForumsName) Values ((Select UserId from Users where Username = ?), ?);'
             conn = sqlite3.connect(DATABASE)
             cur = conn.cursor()
             cur.execute(query, (auth.username, str(forum_name)))
             conn.commit()
+            conn.close()
             return jsonify({'success': True}), 201, {'ContentType': 'application/json'}
         else:
             abort(409)
@@ -154,37 +155,26 @@ def thread(forum_id):
     if request.method == 'POST':
         # auth contains the username and Password
         auth = request.authorization
-        if (auth) == None:
-            abort(401)
-        else:
-            # check_auth returns True or False depending on the credentials
-            check_auth = NewAuth().check_credentials(auth.username, auth.password)
-            if check_auth is False:
-                abort(401)
+        auth_check(auth)
 
         if forum_id:
-            user = query_db('SELECT UserId from Users where Username = ?;', [str(auth.username)])
-            #print(user.get('UserId'))
-            return abort(400)
+            user = query_db('SELECT UserId from Users where Username = ?;', [auth.username])
+            userid = dict(user[0]).get('UserId')
+            requestJSON = request.get_json()
+            conn = get_db()
+            cur = conn.cursor()
+            cur.execute('INSERT Into Threads (`ForumId`, `ThreadsTitle`) Values (?,?);', (int(forum_id), requestJSON.get('title')))
+            thread = cur.execute('SELECT last_insert_rowid() as ThreadId;').fetchall()
+            threadid = dict(thread[0]).get('ThreadId')
+            timestamp = strftime('%a, %d %b %Y %H:%M:%S', gmtime())
+            cur.execute('INSERT into Posts (`AuthorId`, `ThreadBelongsTo`, `PostsTimestamp`, `Message`) values (?,?,?,?);', (userid, threadid, timestamp, requestJSON.get('text')))
+            conn.commit()
+            conn.close()
+
+            return jsonify({'success': True}), 201, {'ContentType': 'application/json'}
         else:
             return abort(404)
     elif request.method == 'GET':
-        # Query to be used here
-        '''SELECT id, title, Users.Username as creator, timestamp
-            from (select id, AuthorId, timestamp, title
-	           from (select Threads.ThreadId as id, AuthorId, timestamp, Threads.ThreadsTitle as title, Threads.ForumId as Fid
-			            from (select ThreadBelongsTo, AuthorId, PostsTimestamp as timestamp, Posts.PostId from Posts)
-			                  join Threads
-			                  on ThreadBelongsTo = Threads.ThreadId
-			                  group by Threads.ThreadId
-			                  having max(PostId)
-			                  order by PostId desc)
-	                    join Forums
-	                    on Fid = Forums.ForumId
-	                    where Forums.ForumId = ?)
-                join Users
-                where AuthorId = Users.UserId'''
-
         query = 'SELECT id, title, Users.Username as creator, timestamp from (select id, AuthorId, timestamp, title from (select Threads.ThreadId as id, AuthorId, timestamp, Threads.ThreadsTitle as title, Threads.ForumId as Fid from (select ThreadBelongsTo, AuthorId, PostsTimestamp as timestamp, Posts.PostId from Posts) join Threads on ThreadBelongsTo = Threads.ThreadId group by Threads.ThreadId having max(PostId) order by PostId desc) join Forums on Fid = Forums.ForumId where Forums.ForumId = ?) join Users where AuthorId = Users.UserId'
         to_filter = []
         #return all the threads from the forum
@@ -193,8 +183,6 @@ def thread(forum_id):
             conn.row_factory = dict_factory
             cur = conn.cursor()
             all_threads = cur.execute(query, [str(forum_id)]).fetchall()
-            test = query_db(query, [int(forum_id)])
-            print(test)
             # If the the quey returns an empty result
             # e.g. http://127.0.0.1:5000/forums/100
             if all_threads == []:
