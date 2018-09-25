@@ -226,7 +226,15 @@ def post(forum_id, thread_id):
             if (checkifforumexists == []) or (checkifthreadexists == []):
                 abort(404)
 
-
+            user = query_db('SELECT UserId from Users where Username = ?;', [auth.username])
+            userid = dict(user[0]).get('UserId')
+            requestJSON = request.get_json()
+            timestamp = strftime('%a, %d %b %Y %H:%M:%S', gmtime())
+            conn = get_db()
+            cur = conn.cursor()
+            cur.execute('INSERT into Posts (`AuthorId`, `ThreadBelongsTo`, `PostsTimestamp`, `Message`) values (?,?,?,?);', (userid, thread_id, timestamp, requestJSON.get('text')))
+            conn.commit()
+            conn.close()
 
             return jsonify({'success': True}), 201, {'ContentType': 'application/json'}
         else:
