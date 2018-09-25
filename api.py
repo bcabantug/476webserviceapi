@@ -11,13 +11,6 @@ app.config["DEBUG"] = True
 # Global db variable
 DATABASE = 'forum.db'
 
-# @app.cli.command()
-
-# TODO: remove if not used
-# definiton to establish the connection to the db once
-def establish_dbconn(dbname, command):
-    print ('db connected')
-
 # From http://flask.pocoo.org/docs/1.0/patterns/sqlite3/
 # Connects to and returns the db used in init_db() and query_db()
 def get_db():
@@ -216,7 +209,6 @@ def dashboard():
 @app.route('/forums/<forum_id>/<thread_id>', methods=['GET', 'POST'])
 def post(forum_id, thread_id):
     if request.method == 'POST':
-        # TODO:adding a new post to the specified thread
         auth = request.authorization
         auth_check(auth)
 
