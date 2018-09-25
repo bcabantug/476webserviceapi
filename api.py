@@ -158,6 +158,9 @@ def thread(forum_id):
         auth_check(auth)
 
         if forum_id:
+            checkifforumexists = query_db('SELECT 1 from Forums where ForumId = ?;', [forum_id])
+            if checkifforumexists == []:
+                abort(404)
             user = query_db('SELECT UserId from Users where Username = ?;', [auth.username])
             userid = dict(user[0]).get('UserId')
             requestJSON = request.get_json()
@@ -199,14 +202,6 @@ def thread(forum_id):
 
 @app.route('/')
 def index():
-    # TODO: remove before submission
-    # NewAuth example code
-    basic_auth = NewAuth().check_credentials('cameron', 'test')
-    if basic_auth is True:
-        print ('Authenticated')
-    elif basic_auth is False:
-        print ('Not Authenticated')
-
     return render_template('index.html')
 
 @app.route('/login')
@@ -221,8 +216,22 @@ def dashboard():
 @app.route('/forums/<forum_id>/<thread_id>', methods=['GET', 'POST'])
 def post(forum_id, thread_id):
     if request.method == 'POST':
-        return('Posting forum')
         # TODO:adding a new post to the specified thread
+        auth = request.authorization
+        auth_check(auth)
+
+        if (forum_id or thread_id):
+            checkifforumexists = query_db('SELECT 1 from Forums where ForumId = ?;', [forum_id])
+            checkifthreadexists = query_db('SELECT 1 from Threads where ThreadId = ?;', [thread_id])
+            if (checkifforumexists == []) or (checkifthreadexists == []):
+                abort(404)
+
+
+
+            return jsonify({'success': True}), 201, {'ContentType': 'application/json'}
+        else:
+            abort(404)
+
 
     elif request.method == 'GET':
         # Get all posts from specified thread
