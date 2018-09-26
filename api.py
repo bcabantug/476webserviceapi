@@ -235,7 +235,6 @@ def post(forum_id, thread_id):
 
     elif request.method == 'GET':
         # Get all posts from specified thread
-        data = request.get_json()
         query = 'SELECT Username as author, Message as text, PostsTimestamp as timestamp from Posts join Users on AuthorId = UserId and ThreadBelongsTo = ?;'
         conn = sqlite3.connect(DATABASE)
         conn.row_factory = dict_factory
@@ -247,76 +246,87 @@ def post(forum_id, thread_id):
         else:
             return jsonify(allPosts)
 
+    else:
+        abort(405)
+
 @app.route('/users', methods=['POST'])
 def user():
-    # curl -X POST -H "Content-Type: application/json" -d '{"username": "tuvwxyz", "password": "123" }' http://localhost:5000/users
-    data = request.get_json()
-    username = data['username']
-    password = data['password']
-    query = 'SELECT Username FROM Users WHERE Username=?'
-    conn = sqlite3.connect(DATABASE)
-    cur = conn.cursor()
-
-    # https://stackoverflow.com/questions/16856647/sqlite3-programmingerror-incorrect-number-of-bindings-supplied-the-current-sta
-    # Was running into an issue regarding the execute statement and needed to include a ',' after data['username'] in order for the query
-    # to be ran
-    user = cur.execute(query, (username,)).fetchall()
-
-    if user == []:
-        query = 'INSERT INTO Users (Username, Password) VALUES (?, ?);'
+    if request.method == 'POST':
+        # curl -X POST -H "Content-Type: application/json" -d '{"username": "tuvwxyz", "password": "123" }' http://localhost:5000/users
+        data = request.get_json()
+        username = data['username']
+        password = data['password']
+        query = 'SELECT Username FROM Users WHERE Username=?'
         conn = sqlite3.connect(DATABASE)
         cur = conn.cursor()
-        # Need to use parameterised queries so API can insert values for username and
-        # password into the query at the places with a ?
-        # sources:
-        # https://stackoverflow.com/questions/32945910/python-3-sqlite3-incorrect-number-of-bindings
-        # https://stackoverflow.com/questions/32240718/dict-object-has-no-attribute-id
-        cur.execute(query, (data['username'], data['password']))
-        conn.commit()
-        return jsonify({'success': True}), 201, {'ContentType': 'application/json'}
+
+        # https://stackoverflow.com/questions/16856647/sqlite3-programmingerror-incorrect-number-of-bindings-supplied-the-current-sta
+        # Was running into an issue regarding the execute statement and needed to include a ',' after data['username'] in order for the query
+        # to be ran
+        user = cur.execute(query, (username,)).fetchall()
+
+        if user == []:
+            query = 'INSERT INTO Users (Username, Password) VALUES (?, ?);'
+            conn = sqlite3.connect(DATABASE)
+            cur = conn.cursor()
+            # Need to use parameterised queries so API can insert values for username and
+            # password into the query at the places with a ?
+            # sources:
+            # https://stackoverflow.com/questions/32945910/python-3-sqlite3-incorrect-number-of-bindings
+            # https://stackoverflow.com/questions/32240718/dict-object-has-no-attribute-id
+            cur.execute(query, (data['username'], data['password']))
+            conn.commit()
+            return jsonify({'success': True}), 201, {'ContentType': 'application/json'}
+        else:
+            return abort(409)
+
     else:
-        return abort(409)
+        return abort(405)
 
 #create a new user POST
 
 #changes a user's password PUT
 @app.route('/users/<username>', methods=['PUT'])
 def change_pass(username):
-    # auth contains the username and Password
-    auth = request.authorization
+    if request.method == 'PUT':
+        # auth contains the username and Password
+        auth = request.authorization
 
-    # check_auth returns True or False depending on the credentials
-    check_auth = NewAuth().check_credentials(auth.username, auth.password)
+        # check_auth returns True or False depending on the credentials
+        check_auth = NewAuth().check_credentials(auth.username, auth.password)
 
-    # password contain the value of the new password after getting it from data with the appropriate key
-    data = request.get_json()
-    password = data.get('password')
+        # password contain the value of the new password after getting it from data with the appropriate key
+        data = request.get_json()
+        password = data.get('password')
 
-    # Query the db to determine if the username has an account
-    query = "SELECT Username FROM Users WHERE Username=?"
-    conn = sqlite3.connect(DATABASE)
-    cur = conn.cursor()
-    # https://stackoverflow.com/questions/14861162/cursor-fetchall-returns-extra-characters-using-mysqldb-and-python
-    # If using fetchall() there is a potential error because it returns a list of tuples rather than just one tuple
-    user = cur.execute(query, [data.get('username')]).fetchone()
-
-    if user == None:
-        print ("hah not found")
-        return abort(404)
-    elif auth is False or check_auth is False:
-        print ("wrong password dummy")
-        return abort(401)
-    elif auth.username != username:
-        print ("hey you, stop it")
-        return abort(409)
-    else:
-        query = "UPDATE Users SET Password=? WHERE Username=?"
+        # Query the db to determine if the username has an account
+        query = "SELECT Username FROM Users WHERE Username=?"
         conn = sqlite3.connect(DATABASE)
         cur = conn.cursor()
-        cur.execute(query, (password, username))
-        conn.commit()
+        # https://stackoverflow.com/questions/14861162/cursor-fetchall-returns-extra-characters-using-mysqldb-and-python
+        # If using fetchall() there is a potential error because it returns a list of tuples rather than just one tuple
+        user = cur.execute(query, [data.get('username')]).fetchone()
 
-        return jsonify({'success': True}), 200, {'ContentType': 'application/json'}
+        if user == None:
+            print ("hah not found")
+            return abort(404)
+        elif auth is False or check_auth is False:
+            print ("wrong password dummy")
+            return abort(401)
+        elif auth.username != username:
+            print ("hey you, stop it")
+            return abort(409)
+        else:
+            query = "UPDATE Users SET Password=? WHERE Username=?"
+            conn = sqlite3.connect(DATABASE)
+            cur = conn.cursor()
+            cur.execute(query, (password, username))
+            conn.commit()
+
+            return jsonify({'success': True}), 200, {'ContentType': 'application/json'}
+
+    else:
+        return(405)
 
 #from http://flask.pocoo.org/docs/1.0/cli/
 # CLI command for initlizing the db
