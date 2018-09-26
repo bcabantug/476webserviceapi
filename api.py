@@ -69,6 +69,16 @@ def auth_check(auth):
         if check_auth is False:
             abort(401)
 
+def get_response(status, body=None, location=None):
+    if body != None:
+        response = jsonify(body)
+    else:
+        response = jsonify()
+    response.status_code = status
+    if location != None:
+        response.headers['Location'] = location
+    return response
+
 
 
 #list available discussion forums GET
@@ -98,11 +108,15 @@ def forum():
             conn = sqlite3.connect(DATABASE)
             cur = conn.cursor()
             cur.execute(query, (auth.username, str(forum_name)))
+            forum = cur.execute('SELECT last_insert_rowid() as ForumId;').fetchall()
+            print(forum)
+            # forumdid = dict(forum[0]).get('ForumdId')
             conn.commit()
             conn.close()
-            return jsonify({'success': True}), 201, {'ContentType': 'application/json'}
+            return get_response(401, body=None, location='/forums/1')
+            #return jsonify({'success': True}), 201, {'ContentType': 'application/json'}, {'location': '/forums'}
         else:
-            abort(409)
+            return get_response(409)
     #request for all the present forums
     elif request.method == 'GET':
         query = 'SELECT Users.Username as creator, Forums.ForumId as id, Forums.ForumsName as name FROM Forums, Users where CreatorId = UserId;'
@@ -167,7 +181,11 @@ def thread(forum_id):
             conn.commit()
             conn.close()
 
-            return jsonify({'success': True}), 201, {'ContentType': 'application/json'}
+            response = jsonify({'success': True})
+            response.status_code = 201
+            response.headers['location']
+
+            return jsonify({'success': True}), 201, {'ContentType': 'application/json', 'location': '/forums/'}
         else:
             abort(404)
     elif request.method == 'GET':
