@@ -62,12 +62,12 @@ class NewAuth(BasicAuth):
 def auth_check(auth):
     #auth = request.authorization
     if (auth) == None:
-        abort(401)
+        return get_response(409)
     else:
         # check_auth returns True or False depending on the credentials
         check_auth = NewAuth().check_credentials(auth.username, auth.password)
         if check_auth is False:
-            abort(401)
+            return get_response(409)
 
 def get_response(status, body=None, location=None):
     if body != None:
@@ -113,7 +113,7 @@ def forum():
             # forumdid = dict(forum[0]).get('ForumdId')
             conn.commit()
             conn.close()
-            return get_response(401, body=None, location='/forums/1')
+            return get_response(201, body=None, location='/forums/1')
             #return jsonify({'success': True}), 201, {'ContentType': 'application/json'}, {'location': '/forums'}
         else:
             return get_response(409)
