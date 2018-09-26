@@ -1,4 +1,4 @@
-from flask import Flask, Response, request, jsonify, render_template, g, abort
+from flask import Flask, Response, request, jsonify, render_template, g
 from flask_basicauth import BasicAuth
 import sqlite3
 import json
@@ -89,12 +89,6 @@ def forum():
     if request.method == 'POST':
         # auth contains the username and Password
         auth = request.authorization
-        # # check_auth returns True or False depending on the credentials
-        # check_auth = NewAuth().check_credentials(auth.username, auth.password)
-        # # Abort 401 if not authorized
-        # if check_auth is False:
-        #     abort(401)
-        # #gets the json for the name request
 
         auth_check(auth)
 
@@ -103,7 +97,6 @@ def forum():
         #parse the name from JSON
         forum_name = forum_submit.get('name')
         # If forumn name does't exist insert it into the db and return success
-        # Else abort 409
         if query_db('SELECT ForumsName from Forums where ForumsName = ?', [request.get_json().get('name')], one=True) is None:
             query = 'INSERT into Forums (CreatorId, ForumsName) Values ((Select UserId from Users where Username = ?), ?);'
             conn = get_db()
@@ -147,7 +140,7 @@ def forum():
 
         return jsonify(all_forums)
     else:
-        abort(405)
+        return get_response(405)
 
 #create a new discussion forum POST
 # @app.route('/forums', methods=['POST'])
@@ -166,7 +159,7 @@ def thread(forum_id):
         if forum_id:
             checkifforumexists = query_db('SELECT 1 from Forums where ForumId = ?;', [forum_id])
             if checkifforumexists == []:
-                abort(404)
+                return get_response(404)
             user = query_db('SELECT UserId from Users where Username = ?;', [auth.username])
             userid = dict(user[0]).get('UserId')
             requestJSON = request.get_json()
@@ -183,7 +176,7 @@ def thread(forum_id):
             return get_response(201, body={}, location=('/forums/'+forum_id+'/'+str(threadid)))
             #return jsonify({'success': True}), 201, {'ContentType': 'application/json', 'location': '/forums/'}
         else:
-            abort(404)
+            return get_response(404)
     elif request.method == 'GET':
         query = 'SELECT id, title, Users.Username as creator, timestamp from (select id, AuthorId, timestamp, title from (select Threads.ThreadId as id, AuthorId, timestamp, Threads.ThreadsTitle as title, Threads.ForumId as Fid from (select ThreadBelongsTo, AuthorId, PostsTimestamp as timestamp, Posts.PostId from Posts) join Threads on ThreadBelongsTo = Threads.ThreadId group by Threads.ThreadId having max(PostId) order by PostId desc) join Forums on Fid = Forums.ForumId where Forums.ForumId = ?) join Users where AuthorId = Users.UserId'
         to_filter = []
@@ -196,14 +189,14 @@ def thread(forum_id):
             # If the the quey returns an empty result
             # e.g. http://127.0.0.1:5000/forums/100
             if all_threads == []:
-                abort(404)
+                return get_response(404)
             else:
                 return jsonify(all_threads)
         # What is an example of this case?
         if not forum_id:
-            abort(404)
+            return get_response(404)
     else:
-        abort(405)
+        return get_response(405)
 
 #create a new thread in a specified forums POST
 
@@ -230,7 +223,7 @@ def post(forum_id, thread_id):
             checkifforumexists = query_db('SELECT 1 from Forums where ForumId = ?;', [forum_id])
             checkifthreadexists = query_db('SELECT 1 from Threads where ThreadId = ?;', [thread_id])
             if (checkifforumexists == []) or (checkifthreadexists == []):
-                abort(404)
+                return get_response(404)
 
             user = query_db('SELECT UserId from Users where Username = ?;', [auth.username])
             userid = dict(user[0]).get('UserId')
@@ -245,7 +238,7 @@ def post(forum_id, thread_id):
 
             return jsonify({'success': True}), 201, {'ContentType': 'application/json'}
         else:
-            abort(404)
+            return get_response(404)
 
 
     elif request.method == 'GET':
@@ -257,12 +250,12 @@ def post(forum_id, thread_id):
         # all_threads = cur.execute(query).fetchall()
         allPosts = cur.execute(query, [thread_id]).fetchall()
         if allPosts == []:
-            abort(404)
+            return get_response(404)
         else:
             return jsonify(allPosts)
 
     else:
-        abort(405)
+        return get_response(405)
 
 @app.route('/users', methods=['POST'])
 def user():
@@ -293,10 +286,10 @@ def user():
             conn.commit()
             return jsonify({'success': True}), 201, {'ContentType': 'application/json'}
         else:
-            return abort(409)
+            return return get_response(409)
 
     else:
-        return abort(405)
+        return return get_response(405)
 
 #create a new user POST
 
@@ -324,13 +317,13 @@ def change_pass(username):
 
         if user == None:
             print ("hah not found")
-            abort(404)
+            return get_response(404)
         elif auth is False or check_auth is False:
             print ("wrong password dummy")
-            return abort(401)
+            return return get_response(401)
         elif auth.username != username:
             print ("hey you, stop it")
-            return abort(409)
+            return return get_response(409)
         else:
             query = "UPDATE Users SET Password=? WHERE Username=?"
             conn = sqlite3.connect(DATABASE)
