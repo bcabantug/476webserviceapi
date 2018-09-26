@@ -242,7 +242,7 @@ def post(forum_id, thread_id):
         # all_threads = cur.execute(query).fetchall()
         allPosts = cur.execute(query, [thread_id]).fetchall()
         if allPosts == []:
-            return abort(404)
+            abort(404)
         else:
             return jsonify(allPosts)
 
@@ -309,7 +309,7 @@ def change_pass(username):
 
         if user == None:
             print ("hah not found")
-            return abort(404)
+            abort(404)
         elif auth is False or check_auth is False:
             print ("wrong password dummy")
             return abort(401)
