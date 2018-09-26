@@ -169,7 +169,7 @@ def thread(forum_id):
 
             return jsonify({'success': True}), 201, {'ContentType': 'application/json'}
         else:
-            return abort(404)
+            abort(404)
     elif request.method == 'GET':
         query = 'SELECT id, title, Users.Username as creator, timestamp from (select id, AuthorId, timestamp, title from (select Threads.ThreadId as id, AuthorId, timestamp, Threads.ThreadsTitle as title, Threads.ForumId as Fid from (select ThreadBelongsTo, AuthorId, PostsTimestamp as timestamp, Posts.PostId from Posts) join Threads on ThreadBelongsTo = Threads.ThreadId group by Threads.ThreadId having max(PostId) order by PostId desc) join Forums on Fid = Forums.ForumId where Forums.ForumId = ?) join Users where AuthorId = Users.UserId'
         to_filter = []
