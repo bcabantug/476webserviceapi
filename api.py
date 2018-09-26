@@ -69,6 +69,7 @@ def auth_check(auth):
         if check_auth is False:
             abort(401)
 
+# returns a JSON response with status code and optional body and location
 def get_response(status, body=None, location=None):
     if body != None:
         response = jsonify(body)
@@ -105,7 +106,7 @@ def forum():
         # Else abort 409
         if query_db('SELECT ForumsName from Forums where ForumsName = ?', [request.get_json().get('name')], one=True) is None:
             query = 'INSERT into Forums (CreatorId, ForumsName) Values ((Select UserId from Users where Username = ?), ?);'
-            conn = sqlite3.connect(DATABASE)
+            conn = get_db()
             cur = conn.cursor()
             cur.execute(query, (auth.username, str(forum_name)))
             forum = cur.execute('SELECT last_insert_rowid() as ForumId;').fetchall()
@@ -113,7 +114,7 @@ def forum():
             # forumdid = dict(forum[0]).get('ForumdId')
             conn.commit()
             conn.close()
-            return get_response(401, body=None, location='/forums/1')
+            return get_response(201, body=None, location=('/forums'))
             #return jsonify({'success': True}), 201, {'ContentType': 'application/json'}, {'location': '/forums'}
         else:
             return get_response(409)
@@ -181,9 +182,6 @@ def thread(forum_id):
             conn.commit()
             conn.close()
 
-            response = jsonify({'success': True})
-            response.status_code = 201
-            response.headers['location']
 
             return jsonify({'success': True}), 201, {'ContentType': 'application/json', 'location': '/forums/'}
         else:
