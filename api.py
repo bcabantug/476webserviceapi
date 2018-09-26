@@ -298,7 +298,9 @@ def change_pass(username):
         auth = request.authorization
 
         # check_auth returns True or False depending on the credentials
-        check_auth = NewAuth().check_credentials(auth.username, auth.password)
+        #check_auth = NewAuth().check_credentials(auth.username, auth.password)
+        if auth_check(auth) is False:
+            return get_response(409)
 
         # password contain the value of the new password after getting it from data with the appropriate key
         data = request.get_json()
@@ -315,10 +317,10 @@ def change_pass(username):
         if user == None:
             #print ("hah not found")
             return get_response(404)
-        elif auth is False or check_auth is False:
-            #print ("wrong password dummy")
-            return get_response(401)
-        elif auth.username != username:
+        # elif auth is False or auth_check(auth) is False:
+        #     #print ("wrong password dummy")
+        #     return get_response(401)
+        elif auth.username != username or auth.username != data.get('username'):
             #print ("hey you, stop it")
             return get_response(409)
         else:
