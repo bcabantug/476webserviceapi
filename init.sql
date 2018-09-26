@@ -80,4 +80,4 @@ VALUES
   (1, 2, 'Fri, 05 Sep 2018 15:43:28 GMT', 'Post Test - Author=1 Thread=1 Most Recent'), --id=4
   (3, 3, 'Tue, 06 Sep 2018 15:42:28 GMT', 'Post Test - Author=3 Thread=2'), --id=5
   (2, 3, 'Wed, 07 Sep 2018 15:43:28 GMT', 'Post Test - Author=2 Thread=2 Most Recent'), --id=6
-  (2, 4, 'Wed, 07 Sep 2018 15:45:28 GMT', 'Post TEST 4 EXISTS') --id=7
+  (2, 4, 'Wed, 07 Sep 2018 15:45:28 GMT', 'Post TEST 4 EXISTS'); --id=7

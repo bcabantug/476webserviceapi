@@ -57,17 +57,16 @@ class NewAuth(BasicAuth):
         else:
             return False
 
-
 #function to check the auth object for present authorization
 def auth_check(auth):
     #auth = request.authorization
     if (auth) == None:
-        return get_response(409)
+        return False
     else:
         # check_auth returns True or False depending on the credentials
         check_auth = NewAuth().check_credentials(auth.username, auth.password)
         if check_auth is False:
-            return get_response(409)
+            return False
 
 # returns a JSON response with status code and optional body and location
 def get_response(status, body=None, location=None):
@@ -90,7 +89,8 @@ def forum():
         # auth contains the username and Password
         auth = request.authorization
 
-        auth_check(auth)
+        if auth_check(auth) is False:
+            return get_response(409)
 
 
         forum_submit = request.get_json()
@@ -142,11 +142,6 @@ def forum():
     else:
         return get_response(405)
 
-#create a new discussion forum POST
-# @app.route('/forums', methods=['POST'])
-#     def post_forum():
-
-
 #list threads in the specified forum GET
 @app.route('/forums/<forum_id>', methods=['GET', 'POST'])
 def thread(forum_id):
@@ -154,7 +149,9 @@ def thread(forum_id):
     if request.method == 'POST':
         # auth contains the username and Password
         auth = request.authorization
-        auth_check(auth)
+
+        if auth_check(auth) is False:
+            return get_response(409)
 
         if forum_id:
             checkifforumexists = query_db('SELECT 1 from Forums where ForumId = ?;', [forum_id])
@@ -198,7 +195,6 @@ def thread(forum_id):
     else:
         return get_response(405)
 
-#create a new thread in a specified forums POST
 
 @app.route('/')
 def index():
@@ -217,7 +213,8 @@ def dashboard():
 def post(forum_id, thread_id):
     if request.method == 'POST':
         auth = request.authorization
-        auth_check(auth)
+        if auth_check(auth) is False:
+            return get_response(409)
 
         if (forum_id or thread_id):
             checkifforumexists = query_db('SELECT 1 from Forums where ForumId = ?;', [forum_id])
@@ -286,10 +283,10 @@ def user():
             conn.commit()
             return jsonify({'success': True}), 201, {'ContentType': 'application/json'}
         else:
-            return return get_response(409)
+            return get_response(409)
 
     else:
-        return return get_response(405)
+        return get_response(405)
 
 #create a new user POST
 
@@ -316,14 +313,14 @@ def change_pass(username):
         user = cur.execute(query, [data.get('username')]).fetchone()
 
         if user == None:
-            print ("hah not found")
+            #print ("hah not found")
             return get_response(404)
         elif auth is False or check_auth is False:
-            print ("wrong password dummy")
-            return return get_response(401)
+            #print ("wrong password dummy")
+            return get_response(401)
         elif auth.username != username:
-            print ("hey you, stop it")
-            return return get_response(409)
+            #print ("hey you, stop it")
+            return get_response(409)
         else:
             query = "UPDATE Users SET Password=? WHERE Username=?"
             conn = sqlite3.connect(DATABASE)
@@ -334,7 +331,7 @@ def change_pass(username):
             return jsonify({'success': True}), 200, {'ContentType': 'application/json'}
 
     else:
-        return(405)
+        return get_response(405)
 
 #from http://flask.pocoo.org/docs/1.0/cli/
 # CLI command for initlizing the db
