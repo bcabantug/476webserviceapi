@@ -110,16 +110,10 @@ def forum():
             cur = conn.cursor()
             cur.execute(query, (auth.username, str(forum_name)))
             forum = cur.execute('SELECT last_insert_rowid() as ForumId;').fetchall()
-            print(forum)
-            # forumdid = dict(forum[0]).get('ForumdId')
+            forumid = dict(forum[0]).get('ForumId')
             conn.commit()
             conn.close()
-<<<<<<< HEAD
-            return get_response(201, body=None, location=('/forums'))
-=======
-            return get_response(201, body=None, location='/forums/1')
->>>>>>> fa4ea5d80bf5570fcd1bbe19979468cea118c73f
-            #return jsonify({'success': True}), 201, {'ContentType': 'application/json'}, {'location': '/forums'}
+            return get_response(201, body=None, location=('/forums/'+str(forumid)))
         else:
             return get_response(409)
     #request for all the present forums
