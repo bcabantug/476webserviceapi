@@ -62,12 +62,12 @@ class NewAuth(BasicAuth):
 def auth_check(auth):
     #auth = request.authorization
     if (auth) == None:
-        return get_response(409)
+        return False
     else:
         # check_auth returns True or False depending on the credentials
         check_auth = NewAuth().check_credentials(auth.username, auth.password)
         if check_auth is False:
-            return get_response(409)
+            return False
 
 # returns a JSON response with status code and optional body and location
 def get_response(status, body=None, location=None):
@@ -96,7 +96,8 @@ def forum():
         #     abort(401)
         # #gets the json for the name request
 
-        auth_check(auth)
+        if auth_check(auth) is False:
+            return get_response(409)
 
 
         forum_submit = request.get_json()
@@ -147,7 +148,7 @@ def forum():
 
         return jsonify(all_forums)
     else:
-        abort(405)
+        return get_response(404)
 
 #create a new discussion forum POST
 # @app.route('/forums', methods=['POST'])
