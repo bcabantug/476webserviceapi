@@ -62,12 +62,12 @@ class NewAuth(BasicAuth):
 def auth_check(auth):
     #auth = request.authorization
     if (auth) == None:
-        return False
+        return get_response(409)
     else:
         # check_auth returns True or False depending on the credentials
         check_auth = NewAuth().check_credentials(auth.username, auth.password)
         if check_auth is False:
-            return False
+            return get_response(409)
 
 # returns a JSON response with status code and optional body and location
 def get_response(status, body=None, location=None):
@@ -96,8 +96,7 @@ def forum():
         #     abort(401)
         # #gets the json for the name request
 
-        if auth_check(auth) is False:
-            return get_response(409)
+        auth_check(auth)
 
 
         forum_submit = request.get_json()
@@ -148,7 +147,7 @@ def forum():
 
         return jsonify(all_forums)
     else:
-        return get_response(404)
+        abort(405)
 
 #create a new discussion forum POST
 # @app.route('/forums', methods=['POST'])
@@ -181,8 +180,8 @@ def thread(forum_id):
             conn.commit()
             conn.close()
 
-
-            return jsonify({'success': True}), 201, {'ContentType': 'application/json', 'location': '/forums/'}
+            return get_response(201, body={}, location=('/forums/'+forum_id+'/'+str(threadid)))
+            #return jsonify({'success': True}), 201, {'ContentType': 'application/json', 'location': '/forums/'}
         else:
             abort(404)
     elif request.method == 'GET':
@@ -240,6 +239,7 @@ def post(forum_id, thread_id):
             conn = get_db()
             cur = conn.cursor()
             cur.execute('INSERT into Posts (`AuthorId`, `ThreadBelongsTo`, `PostsTimestamp`, `Message`) values (?,?,?,?);', (userid, thread_id, timestamp, requestJSON.get('text')))
+
             conn.commit()
             conn.close()
 
