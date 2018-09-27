@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, g
+from flask import Flask, request, jsonify, g, Response
 from flask_basicauth import BasicAuth
 import sqlite3
 import json
@@ -79,6 +79,17 @@ def get_response(status, body=None, location=None):
         response.headers['Location'] = location
     return response
 
+# from http://blog.luisrei.com/articles/flaskrest.html
+@app.errorhandler(404)
+def not_found(error=None):
+    message = {
+            'status': 404,
+            'message': 'Not Found: ' + request.url,
+    }
+    resp = jsonify(message)
+    resp.status_code = 404
+
+    return resp
 
 
 #list available discussion forums GET
@@ -138,7 +149,8 @@ def forum():
         cur = conn.cursor()
         all_forums = cur.execute(query).fetchall()
 
-        return jsonify(all_forums)
+        return Response(None, 200)
+        #return jsonify(all_forums)
     else:
         return get_response(405)
 
