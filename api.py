@@ -1,4 +1,4 @@
-from flask import Flask, Response, request, jsonify, render_template, g
+from flask import Flask, request, jsonify, g
 from flask_basicauth import BasicAuth
 import sqlite3
 import json
@@ -196,17 +196,17 @@ def thread(forum_id):
         return get_response(405)
 
 
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-@app.route('/login')
-def login():
-    return render_template('login.html')
-
-@app.route('/dashboard')
-def dashboard():
-    return render_template('dashboard.html')
+# @app.route('/')
+# def index():
+#     return render_template('index.html')
+#
+# @app.route('/login')
+# def login():
+#     return render_template('login.html')
+#
+# @app.route('/dashboard')
+# def dashboard():
+#     return render_template('dashboard.html')
 
 #list posts to the specified thread GET
 @app.route('/forums/<forum_id>/<thread_id>', methods=['GET', 'POST'])
