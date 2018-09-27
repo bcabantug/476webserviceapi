@@ -90,7 +90,7 @@ def forum():
         auth = request.authorization
 
         if auth_check(auth) is False:
-            return get_response(409) # no specifcation to reutn 401 if unauthorized
+            return get_response(401)
 
 
         forum_submit = request.get_json()
@@ -151,7 +151,7 @@ def thread(forum_id):
         auth = request.authorization
 
         if auth_check(auth) is False:
-            return get_response(404) # no specifcation to reutn 401 if unauthorized
+            return get_response(401)
 
         if forum_id:
             checkifforumexists = query_db('SELECT 1 from Forums where ForumId = ?;', [forum_id])
@@ -214,7 +214,7 @@ def post(forum_id, thread_id):
     if request.method == 'POST':
         auth = request.authorization
         if auth_check(auth) is False:
-            return get_response(404) # no specifcation to reutn 401 if unauthorized
+            return get_response(401)
 
         if forum_id and thread_id:
             checkifforumexists = query_db('SELECT 1 from Forums where ForumId = ?;', [forum_id])
@@ -304,7 +304,7 @@ def change_pass(username):
         # check_auth returns True or False depending on the credentials
         #check_auth = NewAuth().check_credentials(auth.username, auth.password)
         if auth_check(auth) is False:
-            return get_response(409) # no specifcation to reutn 401 if unauthorized
+            return get_response(401)
 
         # password contain the value of the new password after getting it from data with the appropriate key
         data = request.get_json()
