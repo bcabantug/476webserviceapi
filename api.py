@@ -165,7 +165,7 @@ def thread(forum_id):
             cur.execute('INSERT Into Threads (`ForumId`, `ThreadsTitle`) Values (?,?);', (int(forum_id), requestJSON.get('title')))
             thread = cur.execute('SELECT last_insert_rowid() as ThreadId;').fetchall()
             threadid = dict(thread[0]).get('ThreadId')
-            timestamp = strftime('%a, %d %b %Y %H:%M:%S', gmtime())
+            timestamp = strftime('%a, %d %b %Y %H:%M:%S', gmtime()) + ' GMT'
             cur.execute('INSERT into Posts (`AuthorId`, `ThreadBelongsTo`, `PostsTimestamp`, `Message`) values (?,?,?,?);', (userid, threadid, timestamp, requestJSON.get('text')))
             conn.commit()
             conn.close()
@@ -173,6 +173,7 @@ def thread(forum_id):
             return get_response(201, body={}, location=('/forums/'+forum_id+'/'+str(threadid)))
         else:
             return get_response(404)
+
     elif request.method == 'GET':
         query = 'SELECT id, title, Users.Username as creator, timestamp from (select id, AuthorId, timestamp, title from (select Threads.ThreadId as id, AuthorId, timestamp, Threads.ThreadsTitle as title, Threads.ForumId as Fid from (select ThreadBelongsTo, AuthorId, PostsTimestamp as timestamp, Posts.PostId from Posts) join Threads on ThreadBelongsTo = Threads.ThreadId group by Threads.ThreadId having max(PostId) order by PostId desc) join Forums on Fid = Forums.ForumId where Forums.ForumId = ?) join Users where AuthorId = Users.UserId'
         to_filter = []
@@ -224,7 +225,7 @@ def post(forum_id, thread_id):
             user = query_db('SELECT UserId from Users where Username = ?;', [auth.username])
             userid = dict(user[0]).get('UserId')
             requestJSON = request.get_json()
-            timestamp = strftime('%a, %d %b %Y %H:%M:%S', gmtime())
+            timestamp = strftime('%a, %d %b %Y %H:%M:%S', gmtime()) + ' GMT'
             conn = get_db()
             cur = conn.cursor()
             cur.execute('INSERT into Posts (`AuthorId`, `ThreadBelongsTo`, `PostsTimestamp`, `Message`) values (?,?,?,?);', (userid, thread_id, timestamp, requestJSON.get('text')))
