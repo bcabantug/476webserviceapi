@@ -90,7 +90,7 @@ def forum():
         auth = request.authorization
 
         if auth_check(auth) is False:
-            return get_response(409)
+            return get_response(409) # no specifcation to reutn 401 if unauthorized
 
 
         forum_submit = request.get_json()
@@ -151,7 +151,7 @@ def thread(forum_id):
         auth = request.authorization
 
         if auth_check(auth) is False:
-            return get_response(409)
+            return get_response(404) # no specifcation to reutn 401 if unauthorized
 
         if forum_id:
             checkifforumexists = query_db('SELECT 1 from Forums where ForumId = ?;', [forum_id])
@@ -171,7 +171,6 @@ def thread(forum_id):
             conn.close()
 
             return get_response(201, body={}, location=('/forums/'+forum_id+'/'+str(threadid)))
-            #return jsonify({'success': True}), 201, {'ContentType': 'application/json', 'location': '/forums/'}
         else:
             return get_response(404)
     elif request.method == 'GET':
@@ -214,9 +213,9 @@ def post(forum_id, thread_id):
     if request.method == 'POST':
         auth = request.authorization
         if auth_check(auth) is False:
-            return get_response(409)
+            return get_response(404) # no specifcation to reutn 401 if unauthorized
 
-        if (forum_id or thread_id):
+        if forum_id and thread_id:
             checkifforumexists = query_db('SELECT 1 from Forums where ForumId = ?;', [forum_id])
             checkifthreadexists = query_db('SELECT 1 from Threads where ThreadId = ?;', [thread_id])
             if (checkifforumexists == []) or (checkifthreadexists == []):
@@ -229,16 +228,19 @@ def post(forum_id, thread_id):
             conn = get_db()
             cur = conn.cursor()
             cur.execute('INSERT into Posts (`AuthorId`, `ThreadBelongsTo`, `PostsTimestamp`, `Message`) values (?,?,?,?);', (userid, thread_id, timestamp, requestJSON.get('text')))
-
             conn.commit()
             conn.close()
 
-            return jsonify({'success': True}), 201, {'ContentType': 'application/json'}
+            return get_response(201)
         else:
             return get_response(404)
 
 
     elif request.method == 'GET':
+        # check if the forum exists
+        checkifforumexists = query_db('SELECT 1 from Forums where ForumId = ?;', [forum_id])
+        if checkifforumexists == []:
+            return get_response(404)
         # Get all posts from specified thread
         query = 'SELECT Username as author, Message as text, PostsTimestamp as timestamp from Posts join Users on AuthorId = UserId and ThreadBelongsTo = ?;'
         conn = sqlite3.connect(DATABASE)
@@ -246,10 +248,11 @@ def post(forum_id, thread_id):
         cur = conn.cursor()
         # all_threads = cur.execute(query).fetchall()
         allPosts = cur.execute(query, [thread_id]).fetchall()
+        conn.close()
         if allPosts == []:
             return get_response(404)
         else:
-            return jsonify(allPosts)
+            return get_response(200, body=allPosts)
 
     else:
         return get_response(405)
@@ -281,7 +284,7 @@ def user():
             # https://stackoverflow.com/questions/32240718/dict-object-has-no-attribute-id
             cur.execute(query, (data['username'], data['password']))
             conn.commit()
-            return jsonify({'success': True}), 201, {'ContentType': 'application/json'}
+            return get_response(201)
         else:
             return get_response(409)
 
@@ -300,7 +303,7 @@ def change_pass(username):
         # check_auth returns True or False depending on the credentials
         #check_auth = NewAuth().check_credentials(auth.username, auth.password)
         if auth_check(auth) is False:
-            return get_response(409)
+            return get_response(409) # no specifcation to reutn 401 if unauthorized
 
         # password contain the value of the new password after getting it from data with the appropriate key
         data = request.get_json()
@@ -330,7 +333,7 @@ def change_pass(username):
             cur.execute(query, (password, username))
             conn.commit()
 
-            return jsonify({'success': True}), 200, {'ContentType': 'application/json'}
+            return get_response(200)
 
     else:
         return get_response(405)
