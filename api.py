@@ -354,7 +354,7 @@ def change_pass(username):
 #from http://flask.pocoo.org/docs/1.0/cli/
 # CLI command for initlizing the db
 @app.cli.command()
-def init_db():
+def init_db('init_db'):
     with app.app_context():
         db = get_db()
         with app.open_resource('init.sql', mode='r') as f:
